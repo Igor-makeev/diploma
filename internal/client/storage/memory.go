@@ -14,6 +14,7 @@ type Memorier interface {
 	GetTextSecret(id int) (model.TextSecret, bool, error)
 	FindInStorage(id int) (interface{}, bool)
 	GetSecretList(id int) []*proto.SecretList
+	DeleteSecret(id int)
 	ResetStorage()
 }
 
@@ -140,16 +141,25 @@ func (ms *MemoryStorage) GetTextSecret(id int) (model.TextSecret, bool, error) {
 func (ms *MemoryStorage) FindInStorage(id int) (interface{}, bool) {
 	data, ok, _ := ms.GetLoginPassSecret(id)
 	if ok {
+		if data.IsDelited {
+			return "sorry secret has been delited", true
+		}
 		return data, true
 	}
 
 	dataCard, okCard, _ := ms.GetCardSecret(id)
 	if okCard {
+		if dataCard.IsDelited {
+			return "sorry secret has been delited", true
+		}
 		return dataCard, true
 	}
 
 	textData, okText, _ := ms.GetTextSecret(id)
 	if okText {
+		if textData.IsDelited {
+			return "sorry secret has been delited", true
+		}
 		return textData, true
 	}
 
@@ -178,4 +188,22 @@ func (ms *MemoryStorage) GetSecretList(id int) []*proto.SecretList {
 	}
 
 	return list
+}
+
+func (ms *MemoryStorage) DeleteSecret(id int) {
+	_, ok, _ := ms.GetLoginPassSecret(id)
+	if ok {
+		ms.LoginPassSecrets[id] = model.LoginPassSecret{}
+	}
+
+	_, okCard, _ := ms.GetCardSecret(id)
+	if okCard {
+		ms.CardSecrets[id] = model.CardSecret{}
+	}
+
+	_, okText, _ := ms.GetTextSecret(id)
+	if okText {
+		ms.TextSecrets[id] = model.TextSecret{}
+	}
+
 }

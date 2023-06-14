@@ -14,6 +14,7 @@ type LoginPassSecret struct {
 	Login      string
 	Password   string
 	UpdatedAt  time.Time
+	IsDelited  bool
 }
 
 type TextSecret struct {
@@ -22,6 +23,7 @@ type TextSecret struct {
 	RecordType int
 	Text       string
 	UpdatedAt  time.Time
+	IsDelited  bool
 }
 
 type FileSecret struct {
@@ -31,6 +33,7 @@ type FileSecret struct {
 	Path       string
 	Binary     []byte
 	UpdatedAt  time.Time
+	IsDelited  bool
 }
 
 type CardSecret struct {
@@ -41,4 +44,5 @@ type CardSecret struct {
 	CVV        string
 	Due        string
 	UpdatedAt  time.Time
+	IsDelited  bool
 }

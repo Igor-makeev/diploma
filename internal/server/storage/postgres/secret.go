@@ -26,19 +26,19 @@ const (
 					values ($1,$2,$3,$4,$5,$6) 
 					returning id
 `
-	GetSecret = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at 
+	GetSecret = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at, is_deleted
 				 from secrets 
 				 where id = $1 and user_id = $2
 `
 	DeleteSecret = `update secrets
-					set is_deleted = true, deleted_at = $3 
+					set deleted_at = $3, is_deleted = $4
 					where id = $1 and user_id = $2 returning id`
 	UpdateSecret = `update secrets 
 					set title = $1, content = $2, updated_at = $3
 					where id = $4 and user_id = $5
 					returning type_id, updated_at, deleted_at
 `
-	SecretsByType = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at 
+	SecretsByType = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at, is_deleted
 					 from secrets
 					 where type_id = $1 and user_id = $2 
 `
@@ -71,10 +71,10 @@ func (s *SecretPostgresStorage) CreateSecret(ctx context.Context, secret model.S
 func (s *SecretPostgresStorage) GetSecret(ctx context.Context, secret model.Secret) (model.Secret, error) {
 	ctxWithTimeOut, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
-
+	var sc model.Secret
 	err := s.conn.QueryRow(ctxWithTimeOut, GetSecret, secret.ID, secret.UserID).Scan(
-		&secret.ID, &secret.UserID, &secret.TypeID, &secret.Title, &secret.Content,
-		&secret.CreatedAt, &secret.UpdatedAt, &secret.DeletedAt,
+		&sc.ID, &sc.UserID, &sc.TypeID, &sc.Title, &sc.Content,
+		&sc.CreatedAt, &sc.UpdatedAt, &sc.DeletedAt, &sc.IsDelited,
 	)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
@@ -84,14 +84,14 @@ func (s *SecretPostgresStorage) GetSecret(ctx context.Context, secret model.Secr
 		return secret, fmt.Errorf("error in getting secret from db: %w", err)
 	}
 
-	decode, decErr := hex.DecodeString(string(secret.Content))
+	decode, decErr := hex.DecodeString(string(sc.Content))
 	if decErr != nil {
 		return secret, fmt.Errorf("error in decoding content from db: %w", decErr)
 	}
 
-	secret.Content = decode
+	sc.Content = decode
 
-	return secret, nil
+	return sc, nil
 }
 
 // DeleteSecret - deletes a model.Secret from database.
@@ -100,7 +100,7 @@ func (s *SecretPostgresStorage) DeleteSecret(ctx context.Context, secret model.S
 	defer cancel()
 
 	var deletedSecretId *int
-	err := s.conn.QueryRow(ctxWithTimeOut, DeleteSecret, secret.ID, secret.UserID, time.Now()).Scan(&deletedSecretId)
+	err := s.conn.QueryRow(ctxWithTimeOut, DeleteSecret, secret.ID, secret.UserID, time.Now(), true).Scan(&deletedSecretId)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return secret, fmt.Errorf("secret deletion err: %w", err)
@@ -165,6 +165,7 @@ func (s *SecretPostgresStorage) GetListOfSecretByType(
 			&secret.CreatedAt,
 			&secret.UpdatedAt,
 			&secret.DeletedAt,
+			&secret.IsDelited,
 		); scanErr != nil {
 			return secrets, fmt.Errorf("error in scanning gotten row: %w", scanErr)
 		}

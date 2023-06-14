@@ -7,8 +7,8 @@ create table if not exists secrets
     content    bytea     not null,
     created_at TIMESTAMPTZ default now(),
     updated_at TIMESTAMPTZ default now(),
-    is_deleted bool,
     deleted_at TIMESTAMPTZ default null,
+    is_deleted boolean default false,
     
 
     constraint fk_type_id foreign key (type_id) references secret_types (id) on delete cascade,

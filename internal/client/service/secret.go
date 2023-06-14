@@ -85,14 +85,8 @@ func (s *SecretClientService) GetBinarySecret(id int, location string) error {
 	return nil
 }
 
-// GetSecret - attempts to get secret from memory by its id, if nothing is found then makes gRPC request to server.
+// GetSecret -  makes gRPC request to server.
 func (s *SecretClientService) GetSecret(id int) (interface{}, error) {
-	data, ok := s.storage.FindInStorage(id)
-
-	if ok {
-		//fmt.Printf("Content:%+v\n", data)
-		return data, nil
-	}
 
 	result, err := s.client.GetSecret(s.glCtx.Ctx, &pb.GetSecretRequest{Id: int32(id)})
 	if err != nil {
@@ -123,9 +117,13 @@ func (s *SecretClientService) GetSecret(id int) (interface{}, error) {
 		return nil, errUnmarshal
 	}
 
-	fmt.Printf("Content:%+v\n", m)
+	if result.IsDelited {
 
-	return m, nil
+		return "sorry secret has been delited", nil
+
+	}
+
+	return decoded, nil
 }
 
 // CreateSecret - creates new secret on the server and then makes re-sync memory storage.
@@ -151,6 +149,7 @@ func (s *SecretClientService) CreateSecret(title string, recordType int, content
 
 // DeleteSecret - deletes a secrete from server and then makes re-sync memory storage.
 func (s *SecretClientService) DeleteSecret(id int) error {
+	s.storage.DeleteSecret(id)
 	_, err := s.client.DeleteSecret(s.glCtx.Ctx, &pb.DeleteSecretRequest{Id: uint32(id)})
 	if err != nil {
 		return err
@@ -158,8 +157,8 @@ func (s *SecretClientService) DeleteSecret(id int) error {
 
 	fmt.Println("successfully deleted secret")
 
-	s.storage.ResetStorage()
-	s.syncer.SyncAll()
+	// s.storage.ResetStorage()
+	// s.syncer.SyncAll()
 
 	return nil
 }

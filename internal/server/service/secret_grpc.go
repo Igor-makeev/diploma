@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -54,6 +55,12 @@ func (s *SecretGrpc) CreateSecret(ctx context.Context, in *pb.CreateSecretReques
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	var deletedAt pb.NullableDeletedAt
+	if m.DeletedAt != nil {
+		deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{Data: timestamppb.New(*m.DeletedAt)}}
+	} else {
+		deletedAt = pb.NullableDeletedAt{Kind: nil}
+	}
 
 	return &pb.CreateSecretResponse{
 		Id:        uint32(m.ID),
@@ -61,7 +68,7 @@ func (s *SecretGrpc) CreateSecret(ctx context.Context, in *pb.CreateSecretReques
 		Type:      uint32(m.TypeID),
 		CreatedAt: timestamppb.New(m.CreatedAt),
 		UpdatedAt: timestamppb.New(m.UpdatedAt),
-		DelitedAt: timestamppb.New(m.DeletedAt),
+		DeletedAt: &deletedAt,
 	}, nil
 }
 
@@ -75,13 +82,19 @@ func (s *SecretGrpc) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*p
 	}
 
 	m, err := s.storage.GetSecret(ctx, secret)
-
+	logrus.Print(m.IsDelited)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+	var deletedAt pb.NullableDeletedAt
+	if m.DeletedAt != nil {
+		deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{Data: timestamppb.New(*m.DeletedAt)}}
+	} else {
+		deletedAt = pb.NullableDeletedAt{Kind: nil}
 	}
 
 	return &pb.GetSecretResponse{
@@ -91,7 +104,8 @@ func (s *SecretGrpc) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*p
 		Content:   m.Content,
 		CreatedAt: timestamppb.New(m.CreatedAt),
 		UpdatedAt: timestamppb.New(m.UpdatedAt),
-		DelitedAt: timestamppb.New(m.DeletedAt),
+		DeletedAt: &deletedAt,
+		IsDelited: m.IsDelited,
 	}, nil
 
 }
@@ -140,13 +154,22 @@ func (s *SecretGrpc) EditSecret(ctx context.Context, in *pb.EditSecretRequest) (
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	var deletedAt pb.NullableDeletedAt
+	if updatedSecret.DeletedAt != nil {
+		deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{
+			Data: timestamppb.New(*updatedSecret.DeletedAt)},
+		}
+	} else {
+		deletedAt = pb.NullableDeletedAt{Kind: nil}
+	}
+
 	return &pb.EditSecretResponse{
 		Id:        uint32(updatedSecret.ID),
 		Title:     updatedSecret.Title,
 		Type:      uint32(updatedSecret.TypeID),
 		CreatedAt: timestamppb.New(updatedSecret.CreatedAt),
 		UpdatedAt: timestamppb.New(updatedSecret.UpdatedAt),
-		DelitedAt: timestamppb.New(updatedSecret.DeletedAt),
+		DeletedAt: &deletedAt,
 	}, nil
 }
 
@@ -173,6 +196,13 @@ func (s *SecretGrpc) GetListOfSecretsByType(
 
 	for _, val := range secrets {
 
+		var deletedAt pb.NullableDeletedAt
+		if val.DeletedAt != nil {
+			deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{Data: timestamppb.New(*val.DeletedAt)}}
+		} else {
+			deletedAt = pb.NullableDeletedAt{Kind: nil}
+		}
+
 		castedSecrets = append(castedSecrets, &pb.SecretList{
 			Id:        uint32(val.ID),
 			UserId:    val.UserID.String(),
@@ -181,7 +211,8 @@ func (s *SecretGrpc) GetListOfSecretsByType(
 			Content:   val.Content,
 			CreatedAt: timestamppb.New(val.CreatedAt),
 			UpdatedAt: timestamppb.New(val.UpdatedAt),
-			DelitedAt: timestamppb.New(val.DeletedAt),
+			DeletedAt: &deletedAt,
+			IsDelited: val.IsDelited,
 		})
 	}
 
