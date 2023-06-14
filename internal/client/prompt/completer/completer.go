@@ -1,4 +1,4 @@
-package prompt
+package completer
 
 import "github.com/c-bata/go-prompt"
 

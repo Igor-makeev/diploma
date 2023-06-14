@@ -17,15 +17,15 @@ type Syncer interface {
 }
 
 type Sync struct {
-	storage      Memorier
+	storage      DataEditor
 	secretClient pb.SecretClient
 	glCtx        *model.GlobalContext
 	cr           crypt.Crypter
 }
 
 // NewSync - creates new Sync.
-func NewSync(s Memorier, sc pb.SecretClient, ctx *model.GlobalContext, cr crypt.Crypter) *Sync {
-	return &Sync{storage: s, secretClient: sc, glCtx: ctx, cr: cr}
+func NewSync(de DataEditor, sc pb.SecretClient, ctx *model.GlobalContext, cr crypt.Crypter) *Sync {
+	return &Sync{storage: de, secretClient: sc, glCtx: ctx, cr: cr}
 }
 
 // SyncAll - runs SyncTextData, SyncPassLoginData, SyncCardData under the hood.

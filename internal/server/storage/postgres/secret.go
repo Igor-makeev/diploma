@@ -30,7 +30,9 @@ const (
 				 from secrets 
 				 where id = $1 and user_id = $2
 `
-	DeleteSecret = `delete from secrets where id = $1 and user_id = $2 returning id`
+	DeleteSecret = `update secrets
+					set is_deleted = true, deleted_at = $3 
+					where id = $1 and user_id = $2 returning id`
 	UpdateSecret = `update secrets 
 					set title = $1, content = $2, updated_at = $3
 					where id = $4 and user_id = $5
@@ -98,7 +100,7 @@ func (s *SecretPostgresStorage) DeleteSecret(ctx context.Context, secret model.S
 	defer cancel()
 
 	var deletedSecretId *int
-	err := s.conn.QueryRow(ctxWithTimeOut, DeleteSecret, secret.ID, secret.UserID).Scan(&deletedSecretId)
+	err := s.conn.QueryRow(ctxWithTimeOut, DeleteSecret, secret.ID, secret.UserID, time.Now()).Scan(&deletedSecretId)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return secret, fmt.Errorf("secret deletion err: %w", err)

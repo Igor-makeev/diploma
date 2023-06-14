@@ -1,4 +1,4 @@
-create TABLE users
+create TABLE if not exists users
 (
     id         UUID        DEFAULT gen_random_uuid() not null unique,
     login      TEXT                                  not null unique,
@@ -6,4 +6,4 @@ create TABLE users
     created_at TIMESTAMPTZ default now()
 );
 
-create index index_login_users on users (login);
+create index if not exists index_login_users on users (login);

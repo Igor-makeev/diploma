@@ -13,8 +13,8 @@ type Config struct {
 	SSLCertPath string `env:"SSL_CERT_PATH" envDefault:"cert/localhost.crt"`
 	SSLKeyPath  string `env:"SSL_KEY_PATH" envDefault:"cert/localhost.key"`
 
-	DSN       string `env:"DSN" envDefault:"postgresql://root:root@localhost:5432/secretKeeper?sslmode=disable"`
-	DSNTest   string `env:"DSN" envDefault:"postgresql://root:root@localhost:5432/secretKeeper?sslmode=disable"`
+	DSN       string `env:"DSN" envDefault:"postgres://postgres:root@localhost:5433/postgres?sslmode=disable"`
+	DSNTest   string `env:"DSN" envDefault:"postgres://postgres:root@localhost:5434/secretkeeper_test?sslmode=disable"`
 	JWTSecret string `env:"JWT_SECRET" envDefault:"supa_secret_key"`
 	JWTExp    string `env:"JWT_EXP" envDefault:"14"`
 }

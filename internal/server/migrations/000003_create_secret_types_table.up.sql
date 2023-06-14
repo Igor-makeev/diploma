@@ -1,4 +1,4 @@
-create table secret_types
+create table if not exists secret_types
 (
     id    bigserial primary key,
     title text not null

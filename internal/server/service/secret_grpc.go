@@ -55,20 +55,13 @@ func (s *SecretGrpc) CreateSecret(ctx context.Context, in *pb.CreateSecretReques
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	var deletedAt pb.NullableDeletedAt
-	if m.DeletedAt != nil {
-		deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{Data: timestamppb.New(*m.DeletedAt)}}
-	} else {
-		deletedAt = pb.NullableDeletedAt{Kind: nil}
-	}
-
 	return &pb.CreateSecretResponse{
 		Id:        uint32(m.ID),
 		Title:     m.Title,
 		Type:      uint32(m.TypeID),
 		CreatedAt: timestamppb.New(m.CreatedAt),
 		UpdatedAt: timestamppb.New(m.UpdatedAt),
-		DeletedAt: &deletedAt,
+		DelitedAt: timestamppb.New(m.DeletedAt),
 	}, nil
 }
 
@@ -91,13 +84,6 @@ func (s *SecretGrpc) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*p
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	var deletedAt pb.NullableDeletedAt
-	if m.DeletedAt != nil {
-		deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{Data: timestamppb.New(*m.DeletedAt)}}
-	} else {
-		deletedAt = pb.NullableDeletedAt{Kind: nil}
-	}
-
 	return &pb.GetSecretResponse{
 		Id:        uint32(m.ID),
 		Title:     m.Title,
@@ -105,7 +91,7 @@ func (s *SecretGrpc) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*p
 		Content:   m.Content,
 		CreatedAt: timestamppb.New(m.CreatedAt),
 		UpdatedAt: timestamppb.New(m.UpdatedAt),
-		DeletedAt: &deletedAt,
+		DelitedAt: timestamppb.New(m.DeletedAt),
 	}, nil
 
 }
@@ -154,22 +140,13 @@ func (s *SecretGrpc) EditSecret(ctx context.Context, in *pb.EditSecretRequest) (
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	var deletedAt pb.NullableDeletedAt
-	if updatedSecret.DeletedAt != nil {
-		deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{
-			Data: timestamppb.New(*updatedSecret.DeletedAt)},
-		}
-	} else {
-		deletedAt = pb.NullableDeletedAt{Kind: nil}
-	}
-
 	return &pb.EditSecretResponse{
 		Id:        uint32(updatedSecret.ID),
 		Title:     updatedSecret.Title,
 		Type:      uint32(updatedSecret.TypeID),
 		CreatedAt: timestamppb.New(updatedSecret.CreatedAt),
 		UpdatedAt: timestamppb.New(updatedSecret.UpdatedAt),
-		DeletedAt: &deletedAt,
+		DelitedAt: timestamppb.New(updatedSecret.DeletedAt),
 	}, nil
 }
 
@@ -195,12 +172,6 @@ func (s *SecretGrpc) GetListOfSecretsByType(
 	var castedSecrets []*pb.SecretList
 
 	for _, val := range secrets {
-		var deletedAt pb.NullableDeletedAt
-		if val.DeletedAt != nil {
-			deletedAt = pb.NullableDeletedAt{Kind: &pb.NullableDeletedAt_Data{Data: timestamppb.New(*val.DeletedAt)}}
-		} else {
-			deletedAt = pb.NullableDeletedAt{Kind: nil}
-		}
 
 		castedSecrets = append(castedSecrets, &pb.SecretList{
 			Id:        uint32(val.ID),
@@ -210,7 +181,7 @@ func (s *SecretGrpc) GetListOfSecretsByType(
 			Content:   val.Content,
 			CreatedAt: timestamppb.New(val.CreatedAt),
 			UpdatedAt: timestamppb.New(val.UpdatedAt),
-			DeletedAt: &deletedAt,
+			DelitedAt: timestamppb.New(val.DeletedAt),
 		})
 	}
 

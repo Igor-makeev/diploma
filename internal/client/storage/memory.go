@@ -10,14 +10,17 @@ import (
 
 type Memorier interface {
 	GetLoginPassSecret(id int) (model.LoginPassSecret, bool, error)
-	SetLoginPassSecrets([]model.LoginPassSecret)
 	GetCardSecret(id int) (model.CardSecret, bool, error)
-	SetCardSecrets([]model.CardSecret)
 	GetTextSecret(id int) (model.TextSecret, bool, error)
-	SetTextSecrets([]model.TextSecret)
 	FindInStorage(id int) (interface{}, bool)
 	GetSecretList(id int) []*proto.SecretList
 	ResetStorage()
+}
+
+type DataEditor interface {
+	SetLoginPassSecrets([]model.LoginPassSecret)
+	SetCardSecrets([]model.CardSecret)
+	SetTextSecrets([]model.TextSecret)
 }
 
 type MemoryStorage struct {
@@ -34,6 +37,7 @@ func NewMemoryStorage() *MemoryStorage {
 		TextSecrets:      make(map[int]model.TextSecret, 0),
 		CardSecrets:      make(map[int]model.CardSecret, 0),
 	}
+
 }
 
 // GetLoginPassSecret - attempts to return model.LoginPassSecret from MemoryStorage.
