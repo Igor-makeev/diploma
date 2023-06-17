@@ -11,6 +11,7 @@ import (
 
 	"secretKeeper/internal/client/model"
 	"secretKeeper/internal/client/storage"
+	"secretKeeper/pkg/apperr"
 	"secretKeeper/pkg/crypt"
 	pb "secretKeeper/proto"
 )
@@ -119,7 +120,7 @@ func (s *SecretClientService) GetSecret(id int) (interface{}, error) {
 
 	if result.IsDelited {
 
-		return "sorry secret has been delited", nil
+		return nil, apperr.ErrSecretNotFound
 
 	}
 

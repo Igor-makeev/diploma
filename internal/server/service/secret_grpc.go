@@ -49,6 +49,7 @@ func (s *SecretGrpc) CreateSecret(ctx context.Context, in *pb.CreateSecretReques
 		Content:   in.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		IsDelited: false,
 	}
 
 	m, err := s.storage.CreateSecret(ctx, secret)

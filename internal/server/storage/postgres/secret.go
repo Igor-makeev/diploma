@@ -22,8 +22,8 @@ type SecretPostgresStorage struct {
 
 const (
 	CreateSecrete = `
-					insert into secrets (user_id, type_id, title, content, created_at, updated_at) 
-					values ($1,$2,$3,$4,$5,$6) 
+					insert into secrets (user_id, type_id, title, content, created_at, updated_at, is_deleted) 
+					values ($1,$2,$3,$4,$5,$6,$7) 
 					returning id
 `
 	GetSecret = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at, is_deleted
@@ -56,7 +56,7 @@ func (s *SecretPostgresStorage) CreateSecret(ctx context.Context, secret model.S
 	defer cancel()
 
 	err := s.conn.QueryRow(ctxWithTimeOut, CreateSecrete, secret.UserID, secret.TypeID, secret.Title,
-		hex.EncodeToString(secret.Content), secret.CreatedAt, secret.UpdatedAt,
+		hex.EncodeToString(secret.Content), secret.CreatedAt, secret.UpdatedAt, false,
 	).Scan(&secret.ID)
 	if err != nil {
 		return secret, fmt.Errorf("error in storing secret in db: %w", err)
