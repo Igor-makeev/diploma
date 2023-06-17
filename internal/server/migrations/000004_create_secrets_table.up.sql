@@ -7,7 +7,6 @@ create table if not exists secrets
     content    bytea     not null,
     created_at TIMESTAMPTZ default now(),
     updated_at TIMESTAMPTZ default now(),
-    deleted_at TIMESTAMPTZ default null,
     is_deleted boolean not null,
     
 

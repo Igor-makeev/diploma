@@ -64,7 +64,6 @@ func TestSecretPostgresStorage_CreateSecret(t *testing.T) {
 					Content:   nil,
 					CreatedAt: time.Time{},
 					UpdatedAt: time.Time{},
-					DeletedAt: nil,
 				},
 			},
 			want: model.Secret{
@@ -75,7 +74,6 @@ func TestSecretPostgresStorage_CreateSecret(t *testing.T) {
 				Content:   nil,
 				CreatedAt: time.Time{},
 				UpdatedAt: time.Time{},
-				DeletedAt: nil,
 			},
 			wantErr: assert.NoError,
 			do: func() {
@@ -272,7 +270,6 @@ func TestSecretPostgresStorage_EditSecret(t *testing.T) {
 					Content:   []byte{1, 2},
 					CreatedAt: time.Time{},
 					UpdatedAt: time.Time{},
-					DeletedAt: nil,
 				},
 			},
 			wantErr: assert.NoError,
@@ -303,7 +300,6 @@ func TestSecretPostgresStorage_EditSecret(t *testing.T) {
 					Content:   []byte{1, 2},
 					CreatedAt: time.Time{},
 					UpdatedAt: time.Time{},
-					DeletedAt: nil,
 				},
 			},
 			wantErr: assert.Error,

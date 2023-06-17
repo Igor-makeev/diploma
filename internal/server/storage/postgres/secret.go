@@ -26,19 +26,19 @@ const (
 					values ($1,$2,$3,$4,$5,$6,$7) 
 					returning id
 `
-	GetSecret = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at, is_deleted
+	GetSecret = `select id, user_id, type_id, title, content, created_at, updated_at, is_deleted
 				 from secrets 
 				 where id = $1 and user_id = $2
 `
 	DeleteSecret = `update secrets
-					set deleted_at = $3, is_deleted = $4
+					set is_deleted = $3
 					where id = $1 and user_id = $2 returning id`
 	UpdateSecret = `update secrets 
 					set title = $1, content = $2, updated_at = $3
 					where id = $4 and user_id = $5
-					returning type_id, updated_at, deleted_at
+					returning type_id, updated_at, 
 `
-	SecretsByType = `select id, user_id, type_id, title, content, created_at, updated_at, deleted_at, is_deleted
+	SecretsByType = `select id, user_id, type_id, title, content, created_at, updated_at, is_deleted
 					 from secrets
 					 where type_id = $1 and user_id = $2 
 `
@@ -74,7 +74,7 @@ func (s *SecretPostgresStorage) GetSecret(ctx context.Context, secret model.Secr
 	var sc model.Secret
 	err := s.conn.QueryRow(ctxWithTimeOut, GetSecret, secret.ID, secret.UserID).Scan(
 		&sc.ID, &sc.UserID, &sc.TypeID, &sc.Title, &sc.Content,
-		&sc.CreatedAt, &sc.UpdatedAt, &sc.DeletedAt, &sc.IsDelited,
+		&sc.CreatedAt, &sc.UpdatedAt, &sc.IsDelited,
 	)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
@@ -100,7 +100,7 @@ func (s *SecretPostgresStorage) DeleteSecret(ctx context.Context, secret model.S
 	defer cancel()
 
 	var deletedSecretId *int
-	err := s.conn.QueryRow(ctxWithTimeOut, DeleteSecret, secret.ID, secret.UserID, time.Now(), true).Scan(&deletedSecretId)
+	err := s.conn.QueryRow(ctxWithTimeOut, DeleteSecret, secret.ID, secret.UserID, true).Scan(&deletedSecretId)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return secret, fmt.Errorf("secret deletion err: %w", err)
@@ -125,7 +125,7 @@ func (s *SecretPostgresStorage) EditSecret(ctx context.Context, secret model.Sec
 
 	err := s.conn.QueryRow(ctxWithTimeOut, UpdateSecret, secret.Title, hex.EncodeToString(secret.Content),
 		time.Now(), secret.ID, secret.UserID,
-	).Scan(&secret.TypeID, &secret.UpdatedAt, &secret.DeletedAt)
+	).Scan(&secret.TypeID, &secret.UpdatedAt)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return secret, fmt.Errorf("secret updating error: %w", err)
@@ -164,7 +164,6 @@ func (s *SecretPostgresStorage) GetListOfSecretByType(
 			&secret.Content,
 			&secret.CreatedAt,
 			&secret.UpdatedAt,
-			&secret.DeletedAt,
 			&secret.IsDelited,
 		); scanErr != nil {
 			return secrets, fmt.Errorf("error in scanning gotten row: %w", scanErr)
