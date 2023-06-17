@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"secretKeeper/internal/client/model"
+	"secretKeeper/internal/client/model/secret"
 	"secretKeeper/pkg/crypt"
 	pb "secretKeeper/proto"
 )
@@ -50,10 +51,10 @@ func (s *Sync) SyncTextData() error {
 		panic(err)
 	}
 
-	var list []model.TextSecret
+	var list []secret.TextSecret
 	for _, text := range texts.SecretLists {
 		id := int(text.Id)
-		m := model.TextSecret{}
+		m := secret.TextSecret{}
 
 		decoded, errDecode := s.cr.Decode(string(text.Content))
 		if errDecode != nil {
@@ -82,10 +83,10 @@ func (s *Sync) SyncCardData() error {
 		panic(err)
 	}
 
-	var list []model.CardSecret
+	var list []secret.CardSecret
 	for _, card := range cards.SecretLists {
 		id := int(card.Id)
-		m := model.CardSecret{}
+		m := secret.CardSecret{}
 
 		decoded, errDecode := s.cr.Decode(string(card.Content))
 		if errDecode != nil {
@@ -115,10 +116,10 @@ func (s *Sync) SyncPassLoginData() error {
 		panic(err)
 	}
 
-	var list []model.LoginPassSecret
+	var list []secret.LoginPassSecret
 	for _, sList := range lists.SecretLists {
 		id := int(sList.Id)
-		m := model.LoginPassSecret{}
+		m := secret.LoginPassSecret{}
 
 		decoded, errDecode := s.cr.Decode(string(sList.Content))
 		if errDecode != nil {

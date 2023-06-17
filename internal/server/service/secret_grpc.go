@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -83,7 +82,7 @@ func (s *SecretGrpc) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*p
 	}
 
 	m, err := s.storage.GetSecret(ctx, secret)
-	logrus.Print(m.IsDelited)
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, err.Error())

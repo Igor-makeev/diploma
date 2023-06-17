@@ -4,14 +4,14 @@ import (
 	"errors"
 	"sync"
 
-	"secretKeeper/internal/client/model"
+	"secretKeeper/internal/client/model/secret"
 	"secretKeeper/proto"
 )
 
 type Memorier interface {
-	GetLoginPassSecret(id int) (model.LoginPassSecret, bool, error)
-	GetCardSecret(id int) (model.CardSecret, bool, error)
-	GetTextSecret(id int) (model.TextSecret, bool, error)
+	GetLoginPassSecret(id int) (secret.LoginPassSecret, bool, error)
+	GetCardSecret(id int) (secret.CardSecret, bool, error)
+	GetTextSecret(id int) (secret.TextSecret, bool, error)
 	FindInStorage(id int) (interface{}, bool)
 	GetSecretList(id int) []*proto.SecretList
 	DeleteSecret(id int)
@@ -19,24 +19,24 @@ type Memorier interface {
 }
 
 type DataEditor interface {
-	SetLoginPassSecrets([]model.LoginPassSecret)
-	SetCardSecrets([]model.CardSecret)
-	SetTextSecrets([]model.TextSecret)
+	SetLoginPassSecrets([]secret.LoginPassSecret)
+	SetCardSecrets([]secret.CardSecret)
+	SetTextSecrets([]secret.TextSecret)
 }
 
 type MemoryStorage struct {
 	mu               sync.RWMutex
-	LoginPassSecrets map[int]model.LoginPassSecret
-	TextSecrets      map[int]model.TextSecret
-	CardSecrets      map[int]model.CardSecret
+	LoginPassSecrets map[int]secret.LoginPassSecret
+	TextSecrets      map[int]secret.TextSecret
+	CardSecrets      map[int]secret.CardSecret
 }
 
 // NewMemoryStorage - creates new MemoryStorage.
 func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
-		LoginPassSecrets: make(map[int]model.LoginPassSecret, 0),
-		TextSecrets:      make(map[int]model.TextSecret, 0),
-		CardSecrets:      make(map[int]model.CardSecret, 0),
+		LoginPassSecrets: make(map[int]secret.LoginPassSecret, 0),
+		TextSecrets:      make(map[int]secret.TextSecret, 0),
+		CardSecrets:      make(map[int]secret.CardSecret, 0),
 	}
 
 }
@@ -46,20 +46,20 @@ func NewMemoryStorage() *MemoryStorage {
 // If record is found, then returns model.LoginPassSecret and true as representation of found record.
 //
 // If nothing is found, then returns empty model.LoginPassSecret and false as representation of not found record.
-func (ms *MemoryStorage) GetLoginPassSecret(id int) (model.LoginPassSecret, bool, error) {
+func (ms *MemoryStorage) GetLoginPassSecret(id int) (secret.LoginPassSecret, bool, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
 	data, ok := ms.LoginPassSecrets[id]
 	if !ok {
-		return model.LoginPassSecret{}, ok, errors.New("Login/Pass not found")
+		return secret.LoginPassSecret{}, ok, errors.New("Login/Pass not found")
 	}
 
 	return data, ok, nil
 }
 
 // SetLoginPassSecrets - Sets []model.LoginPassSecret to MemoryStorage.
-func (ms *MemoryStorage) SetLoginPassSecrets(models []model.LoginPassSecret) {
+func (ms *MemoryStorage) SetLoginPassSecrets(models []secret.LoginPassSecret) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
@@ -70,13 +70,13 @@ func (ms *MemoryStorage) SetLoginPassSecrets(models []model.LoginPassSecret) {
 
 // ResetStorage - removes all records from MemoryStorage.
 func (ms *MemoryStorage) ResetStorage() {
-	ms.LoginPassSecrets = make(map[int]model.LoginPassSecret, 0)
-	ms.TextSecrets = make(map[int]model.TextSecret, 0)
-	ms.CardSecrets = make(map[int]model.CardSecret, 0)
+	ms.LoginPassSecrets = make(map[int]secret.LoginPassSecret, 0)
+	ms.TextSecrets = make(map[int]secret.TextSecret, 0)
+	ms.CardSecrets = make(map[int]secret.CardSecret, 0)
 }
 
 // SetCardSecrets - Sets []model.CardSecret to MemoryStorage.
-func (ms *MemoryStorage) SetCardSecrets(models []model.CardSecret) {
+func (ms *MemoryStorage) SetCardSecrets(models []secret.CardSecret) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
@@ -90,20 +90,20 @@ func (ms *MemoryStorage) SetCardSecrets(models []model.CardSecret) {
 // If record is found, then returns model.CardSecret and true as representation of found record.
 //
 // If nothing is found, then returns empty model.CardSecret and false as representation of not found record.
-func (ms *MemoryStorage) GetCardSecret(id int) (model.CardSecret, bool, error) {
+func (ms *MemoryStorage) GetCardSecret(id int) (secret.CardSecret, bool, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
 	data, ok := ms.CardSecrets[id]
 	if !ok {
-		return model.CardSecret{}, ok, errors.New("card data not found")
+		return secret.CardSecret{}, ok, errors.New("card data not found")
 	}
 
 	return data, ok, nil
 }
 
 // SetTextSecrets - Sets []model.TextSecret to MemoryStorage.
-func (ms *MemoryStorage) SetTextSecrets(models []model.TextSecret) {
+func (ms *MemoryStorage) SetTextSecrets(models []secret.TextSecret) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
@@ -117,13 +117,13 @@ func (ms *MemoryStorage) SetTextSecrets(models []model.TextSecret) {
 // If record is found, then returns model.TextSecret and true as representation of found record.
 //
 // If nothing is found, then returns empty model.TextSecret and false as representation of not found record.
-func (ms *MemoryStorage) GetTextSecret(id int) (model.TextSecret, bool, error) {
+func (ms *MemoryStorage) GetTextSecret(id int) (secret.TextSecret, bool, error) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
 	data, ok := ms.TextSecrets[id]
 	if !ok {
-		return model.TextSecret{}, ok, errors.New("text not found")
+		return secret.TextSecret{}, ok, errors.New("text not found")
 	}
 
 	return data, ok, nil
@@ -193,17 +193,17 @@ func (ms *MemoryStorage) GetSecretList(id int) []*proto.SecretList {
 func (ms *MemoryStorage) DeleteSecret(id int) {
 	_, ok, _ := ms.GetLoginPassSecret(id)
 	if ok {
-		ms.LoginPassSecrets[id] = model.LoginPassSecret{}
+		ms.LoginPassSecrets[id] = secret.LoginPassSecret{}
 	}
 
 	_, okCard, _ := ms.GetCardSecret(id)
 	if okCard {
-		ms.CardSecrets[id] = model.CardSecret{}
+		ms.CardSecrets[id] = secret.CardSecret{}
 	}
 
 	_, okText, _ := ms.GetTextSecret(id)
 	if okText {
-		ms.TextSecrets[id] = model.TextSecret{}
+		ms.TextSecrets[id] = secret.TextSecret{}
 	}
 
 }

@@ -1,15 +1,14 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"secretKeeper/internal/client/model"
+	"secretKeeper/internal/client/model/secret"
 	"secretKeeper/internal/client/storage"
 	"secretKeeper/pkg/apperr"
 	"secretKeeper/pkg/crypt"
@@ -87,44 +86,32 @@ func (s *SecretClientService) GetBinarySecret(id int, location string) error {
 }
 
 // GetSecret -  makes gRPC request to server.
-func (s *SecretClientService) GetSecret(id int) (interface{}, error) {
+func (s *SecretClientService) GetSecret(id int) (secret.ResSecret, error) {
 
 	result, err := s.client.GetSecret(s.glCtx.Ctx, &pb.GetSecretRequest{Id: int32(id)})
 	if err != nil {
-		return nil, err
+		return secret.ResSecret{}, err
 	}
 
 	if result.Type == 3 {
-		return nil, errors.New("to get binary data, pleas use proper method")
+		return secret.ResSecret{}, errors.New("to get binary data, pleas use proper method")
 	}
 
 	decoded, errDecode := s.crypt.Decode(string(result.Content))
 	if errDecode != nil {
-		return nil, errDecode
-	}
-
-	var m interface{}
-	switch result.Type {
-	case 1:
-		m = model.LoginPassSecret{}
-	case 2:
-		m = model.TextSecret{}
-	case 4:
-		m = model.CardSecret{}
-	}
-
-	errUnmarshal := json.Unmarshal([]byte(decoded), &m)
-	if errUnmarshal != nil {
-		return nil, errUnmarshal
+		return secret.ResSecret{}, errDecode
 	}
 
 	if result.IsDelited {
 
-		return nil, apperr.ErrSecretNotFound
+		return secret.ResSecret{}, apperr.ErrSecretNotFound
 
 	}
 
-	return decoded, nil
+	return secret.ResSecret{
+		UpdatedAt: result.UpdatedAt.AsTime(),
+		Content:   decoded,
+	}, nil
 }
 
 // CreateSecret - creates new secret on the server and then makes re-sync memory storage.
@@ -166,21 +153,9 @@ func (s *SecretClientService) DeleteSecret(id int) error {
 
 // EditSecret - edits secret on the server and then makes re-sync memory storage.
 func (s *SecretClientService) EditSecret(id int, title string, recordType int, content string, isForce bool) error {
-	var updatedAt time.Time
+
 	localSecret, _ := s.GetSecret(id)
 
-	switch localSecret.(type) {
-	case model.TextSecret:
-		updatedAt = localSecret.(model.TextSecret).UpdatedAt
-	case model.FileSecret:
-		updatedAt = localSecret.(model.FileSecret).UpdatedAt
-	case model.LoginPassSecret:
-		updatedAt = localSecret.(model.LoginPassSecret).UpdatedAt
-	case model.CardSecret:
-		updatedAt = localSecret.(model.CardSecret).UpdatedAt
-	default:
-		panic("unknown type")
-	}
 	contentT := []byte(s.crypt.Encode(content))
 
 	_, err := s.client.EditSecret(
@@ -189,7 +164,7 @@ func (s *SecretClientService) EditSecret(id int, title string, recordType int, c
 			Title:     title,
 			Type:      uint32(recordType),
 			Content:   contentT,
-			UpdatedAt: timestamppb.New(updatedAt),
+			UpdatedAt: timestamppb.New(localSecret.UpdatedAt),
 			IsForce:   isForce,
 		},
 	)

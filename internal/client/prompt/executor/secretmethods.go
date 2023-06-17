@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"secretKeeper/internal/client/model"
+
+	secretModel "secretKeeper/internal/client/model/secret"
 	"strconv"
 	"strings"
 
@@ -24,7 +25,7 @@ func (e *Executor) createAuth(args []string) error {
 		return fmt.Errorf("validation error: Title, Login, Password is missing")
 	}
 
-	m := model.LoginPassSecret{
+	m := secretModel.LoginPassSecret{
 		Title:      args[1],
 		RecordType: 1,
 		Login:      args[2],
@@ -52,7 +53,7 @@ func (e *Executor) createText(args []string) error {
 		return fmt.Errorf("validation error: Title and Text is missing")
 	}
 
-	m := model.TextSecret{
+	m := secretModel.TextSecret{
 		Title:      args[1],
 		RecordType: 2,
 		Text:       strings.Join(args[2:], " "),
@@ -79,7 +80,7 @@ func (e *Executor) createBinary(args []string) error {
 		return fmt.Errorf("validation error: Title and Filepath is missing")
 	}
 
-	m := model.FileSecret{
+	m := secretModel.FileSecret{
 		Title:      args[1],
 		RecordType: 3,
 		Path:       args[2],
@@ -117,7 +118,7 @@ func (e *Executor) createCard(args []string) error {
 		return fmt.Errorf("validation error: Title, Card number, CVV, Due date is missing")
 	}
 
-	cardModel := model.CardSecret{
+	cardModel := secretModel.CardSecret{
 		Title:      args[1],
 		RecordType: 4,
 		CardNumber: args[2],
@@ -157,7 +158,7 @@ func (e *Executor) deleteSecret(args []string) error {
 }
 
 // getSecretsByTypeId - is executor for "get-secrets-by-type" case in Execute method.
-func (e *Executor) getSecretsByTypeId(args []string) ([]model.SecretList, error) {
+func (e *Executor) getSecretsByTypeId(args []string) ([]secretModel.SecretList, error) {
 	switch len(args) - 1 {
 	case 0:
 		return nil, fmt.Errorf("validation error: Secret Type ID is missing")
@@ -173,9 +174,9 @@ func (e *Executor) getSecretsByTypeId(args []string) ([]model.SecretList, error)
 		return nil, err
 	}
 
-	var models []model.SecretList
+	var models []secretModel.SecretList
 	for _, secret := range list {
-		models = append(models, model.SecretList{
+		models = append(models, secretModel.SecretList{
 			Id:    int(secret.Id),
 			Title: secret.Title,
 		})
@@ -185,15 +186,15 @@ func (e *Executor) getSecretsByTypeId(args []string) ([]model.SecretList, error)
 }
 
 // getSecret - is executor for "get-secret" case in Execute method.
-func (e *Executor) getSecret(args []string) (interface{}, error) {
+func (e *Executor) getSecret(args []string) (string, error) {
 	switch len(args) - 1 {
 	case 0:
-		return nil, fmt.Errorf("validation error: Secret ID is missing")
+		return "", fmt.Errorf("validation error: Secret ID is missing")
 	}
 
 	id, convErr := strconv.Atoi(args[1])
 	if convErr != nil {
-		return nil, convErr
+		return "", convErr
 	}
 
 	secret, err := e.app.SecretService.GetSecret(id)
@@ -201,13 +202,13 @@ func (e *Executor) getSecret(args []string) (interface{}, error) {
 		st, _ := status.FromError(err)
 		switch st.Code() {
 		case codes.NotFound:
-			return nil, fmt.Errorf(st.Message())
+			return "", fmt.Errorf(st.Message())
 		default:
-			return nil, err
+			return "", err
 		}
 	}
 
-	return secret, nil
+	return secret.Content, nil
 }
 
 // getSecretBinary - is executor for "get-secret-binary" case in Execute method.
@@ -260,7 +261,7 @@ func (e *Executor) editSecret(args []string, isForce bool) error {
 			case 3:
 				return fmt.Errorf("validation error: Login and Password is missing")
 			default:
-				converted, errConv = json.Marshal(model.LoginPassSecret{
+				converted, errConv = json.Marshal(secretModel.LoginPassSecret{
 					Id:         id,
 					Title:      args[2],
 					RecordType: 1,
@@ -276,7 +277,7 @@ func (e *Executor) editSecret(args []string, isForce bool) error {
 			case 3:
 				return fmt.Errorf("validation error: Text is missing")
 			default:
-				converted, errConv = json.Marshal(model.TextSecret{
+				converted, errConv = json.Marshal(secretModel.TextSecret{
 					Id:         id,
 					Title:      args[2],
 					RecordType: 2,
@@ -291,7 +292,7 @@ func (e *Executor) editSecret(args []string, isForce bool) error {
 			case 3:
 				return fmt.Errorf("validation error: Filepath is missing")
 			default:
-				converted, errConv = json.Marshal(model.FileSecret{
+				converted, errConv = json.Marshal(secretModel.FileSecret{
 					Id:         id,
 					Title:      args[2],
 					RecordType: 3,
@@ -310,7 +311,7 @@ func (e *Executor) editSecret(args []string, isForce bool) error {
 			case 3:
 				return fmt.Errorf("validation error: Card number, CVV and Due date is missing")
 			default:
-				converted, errConv = json.Marshal(model.CardSecret{
+				converted, errConv = json.Marshal(secretModel.CardSecret{
 					Id:         id,
 					Title:      args[2],
 					RecordType: 4,
