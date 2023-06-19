@@ -1,0 +1,7 @@
+FROM golang:latest
+
+WORKDIR /app
+
+RUN go install github.com/githubnemo/CompileDaemon@latest
+
+CMD ["/bin/bash", "./build/package/watcher.sh"]
